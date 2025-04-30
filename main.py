@@ -19,7 +19,7 @@ def write_config(data: dict) -> None:
         json.dump(data, file, indent=4)  # indent makes the output nicely formatted
     
         
-def get_jobs(job_titles: list[str], locations: list[str], days_old: int) -> pd.DataFrame:
+def get_jobs(job_titles: list[str], locations: list[str], days_old: int, my_bar, counter: int, total_jobs) -> pd.DataFrame:
     dfs: list[pd.DataFrame] = []
     
     for job_title in job_titles:
@@ -33,7 +33,7 @@ def get_jobs(job_titles: list[str], locations: list[str], days_old: int) -> pd.D
                 country_indeed='USA',
                 verbose=1
             ))
-            st.write(f"Searching for {job_title} jobs in {location}...")
+            my_bar.progress(counter + ((100 / total_jobs) / 100), text="Scraping in progress. Please wait.")
             time.sleep(5) # Avoid rate limiting
     
     df = pd.concat(dfs, ignore_index=True)
@@ -107,13 +107,18 @@ if submitted:
     time_estimate_minutes = time_estimate_seconds / 60
     
     st.write(f"Time Estimate: {time_estimate_minutes:.1f} minutes")
+    my_bar = st.progress(0, text="Scraping in progress. Please wait.")
+    counter = 0
+    
+    total_jobs = (finance_jobs + bais_jobs + accounting_jobs) * locations
+    
     # st.write(finance_jobs)
     # st.write(bais_jobs)
     # st.write(accounting_jobs)
 
-    finance_jobs_df = get_jobs(finance_jobs, locations, days_old)
-    bais_jobs_df = get_jobs(bais_jobs, locations, days_old)
-    accounting_jobs_df = get_jobs(accounting_jobs, locations, days_old)
+    finance_jobs_df = get_jobs(finance_jobs, locations, days_old, my_bar, counter, total_jobs)
+    bais_jobs_df = get_jobs(bais_jobs, locations, days_old, my_bar, counter, total_jobs)
+    accounting_jobs_df = get_jobs(accounting_jobs, locations, days_old, my_bar, counter, total_jobs)
     
     jobs = pd.concat([finance_jobs_df, bais_jobs_df, accounting_jobs_df], ignore_index=True)
     
