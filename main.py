@@ -1,15 +1,29 @@
 import time
+import json
 import pandas as pd
 from io import BytesIO
 from datetime import date
 from jobspy import scrape_jobs
 import streamlit as st
 
+
+def read_config() -> dict:
+    with open("config.json", "r") as file:
+        data = json.load(file)
+        
+    return data
+
+
+def write_config(data: dict) -> None:
+    with open('config.json', 'w') as file:
+        json.dump(data, file, indent=4)  # indent makes the output nicely formatted
+    
+        
 def get_jobs(job_titles: list[str], locations: list[str], days_old: int) -> pd.DataFrame:
     dfs: list[pd.DataFrame] = []
     
-    for location in locations:
-        for job_title in job_titles:
+    for job_title in job_titles:
+        for location in locations:
             dfs.append(scrape_jobs(
                 site_name=["indeed", "linkedin", "zip_recruiter", "glassdoor"],
                 search_term=job_title,
@@ -57,13 +71,19 @@ def to_excel(df):
 
 
 with st.form("my_form"):
+    data = read_config()
+    locations_str = ", ".join(data["locations"])
+    finance_jobs_str = ", ".join(data["finance_jobs"])
+    bais_jobs_str = ", ".join(data["bais_jobs"])
+    accounting_jobs_str = ", ".join(data["accounting_jobs"])
+    
     st.write("Form Title")
     days_old = st.slider("Days Old", 1, 90)
     num_jobs = st.slider("Max number of jobs to output", 1, 50)
-    locations_input = st.text_input('Locations: (comma seperated)', 'Iowa City, Des Moines, Cedar Rapids, Chicago')
-    finance_jobs_input = st.text_input('Finance Jobs: (comma seperated)', 'Wealth Manager, Financial Planner')
-    bais_jobs_input = st.text_input('BAIS Jobs: (comma seperated)', 'Data Analyst, IT Consultant')
-    accounting_jobs_input = st.text_input('Accounting Jobs: (comma seperated)', 'Master of Accountancy, Accountant')
+    locations_input = st.text_input('Locations: (comma seperated)', locations_str)
+    finance_jobs_input = st.text_input('Finance Jobs: (comma seperated)', finance_jobs_str)
+    bais_jobs_input = st.text_input('BAIS Jobs: (comma seperated)', bais_jobs_str)
+    accounting_jobs_input = st.text_input('Accounting Jobs: (comma seperated)', accounting_jobs_str)
     
     submitted = st.form_submit_button("Submit")
     
@@ -74,6 +94,14 @@ if submitted:
     finance_jobs = [job.strip() for job in finance_jobs_input.split(",")]
     bais_jobs = [job.strip() for job in bais_jobs_input.split(",")]
     accounting_jobs = [job.strip() for job in accounting_jobs_input.split(",")]
+    
+    data = {
+        "locations": locations,
+        "finance_jobs": finance_jobs,
+        "bais_jobs": bais_jobs,
+        "accounting_jobs": accounting_jobs
+    }
+    write_config(data)
 
     
     time_estimate_seconds = len(locations) * ((len(finance_jobs) + len(bais_jobs) + len(accounting_jobs)) * 7)

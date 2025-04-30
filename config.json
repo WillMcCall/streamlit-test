@@ -1,0 +1,6 @@
+{
+    "locations": ["Iowa City", "Des Moines", "Cedar Rapids", "Chicago"],
+    "finance_jobs": ["Wealth Manager", "Financial Planner"],
+    "bais_jobs": ["Data Analyst", "IT Consultant"],
+    "accounting_jobs": ["Master of Accountancy", "Accountant"]
+}
