@@ -59,7 +59,7 @@ def to_excel(df):
 with st.form("my_form"):
     st.write("Form Title")
     days_old = st.slider("Days Old", 1, 90)
-    num_jobs = st.slider("Number of jobs to output", 1, 30)
+    num_jobs = st.slider("Max number of jobs to output", 1, 50)
     locations_input = st.text_input('Locations: (comma seperated)', 'Iowa City, Des Moines, Cedar Rapids, Chicago')
     finance_jobs_input = st.text_input('Finance Jobs: (comma seperated)', 'Wealth Manager, Financial Planner')
     bais_jobs_input = st.text_input('BAIS Jobs: (comma seperated)', 'Data Analyst, IT Consultant')
