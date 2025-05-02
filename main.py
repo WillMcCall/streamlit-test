@@ -1,46 +1,11 @@
-import time
-import json
 import pandas as pd
-from io import BytesIO
 from datetime import date
-from jobspy import scrape_jobs
 import streamlit as st
 import db
-from utils import clean_jobs, filter_jobs
-
-        
-def get_jobs(job_titles: list[str], locations: list[str], days_old: int, my_bar, counter: int, total_jobs, num_jobs_wanted: int) -> list[pd.DataFrame, int]:
-    dfs: list[pd.DataFrame] = []
-    
-    for job_title in job_titles:
-        for location in locations:
-            dfs.append(scrape_jobs(
-                site_name=["indeed", "linkedin", "zip_recruiter", "glassdoor"],
-                search_term=job_title,
-                location=location,
-                results_wanted=2,
-                hours_old=(days_old * 24),
-                country_indeed='USA',
-                verbose=1
-            ))
-            counter += ((100 / total_jobs) / 100)
-            my_bar.progress(counter, text="Scraping in progress. Please wait...")            
-            time.sleep(5) # Avoid rate limiting
-    
-    df = pd.concat(dfs, ignore_index=True)
-    cleaned_df = clean_jobs(df)
-    final_df = filter_jobs(cleaned_df, num_jobs_wanted)
-    return [final_df, counter]
-    
-
-def to_excel(df):
-    output = BytesIO()
-    with pd.ExcelWriter(output, engine='xlsxwriter') as writer:
-        df.to_excel(writer, index=False, sheet_name='Sheet1')
-    processed_data = output.getvalue()
-    return processed_data
+from utils import clean_jobs, filter_jobs, get_jobs, to_excel
 
 
+# Main Logic
 with st.form("my_form"):
     data = db.github_read()
     locations_str = ", ".join(data["locations"])
