@@ -14,19 +14,16 @@ st.session_state.bais_jobs_input = ", ".join(data["bais_jobs"])
 st.session_state.accounting_jobs_input = ", ".join(data["accounting_jobs"])
 
 with st.form("my_form"):
-    locations_str = ", ".join(data["locations"])
-    finance_jobs_str = ", ".join(data["finance_jobs"])
-    bais_jobs_str = ", ".join(data["bais_jobs"])
-    accounting_jobs_str = ", ".join(data["accounting_jobs"])
-    
     days_old = st.slider("Days Old", 1, 90)
     num_jobs = st.slider("Max number of jobs to output", 1, 50)
-    locations_input = st.text_area('Locations: (comma seperated)', locations_str)
-    finance_jobs_input = st.text_area('Finance Jobs: (comma seperated)', finance_jobs_str)
-    bais_jobs_input = st.text_area('BAIS Jobs: (comma seperated)', bais_jobs_str)
-    accounting_jobs_input = st.text_area('Accounting Jobs: (comma seperated)', accounting_jobs_str)
+    
+    locations_input = st.text_area('Locations: (comma separated)', st.session_state.locations_input)
+    finance_jobs_input = st.text_area('Finance Jobs: (comma separated)', st.session_state.finance_jobs_input)
+    bais_jobs_input = st.text_area('BAIS Jobs: (comma separated)', st.session_state.bais_jobs_input)
+    accounting_jobs_input = st.text_area('Accounting Jobs: (comma separated)', st.session_state.accounting_jobs_input)
     
     submitted = st.form_submit_button("Submit")
+
     
 if submitted:
     locations = [loc.strip() for loc in locations_input.split(",")]
