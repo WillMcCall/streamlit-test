@@ -5,20 +5,15 @@ import db
 from utils import clean_jobs, filter_jobs, get_jobs, to_excel
 
 
-# Force clear session_state values so Streamlit doesn't remember old inputs
-if "form_reset" not in st.session_state or st.button("Reset Form"):
-    st.session_state.form_reset = True
-
-    data = db.github_read()
-    st.session_state.locations_input = ", ".join(data["locations"])
-    st.session_state.finance_jobs_input = ", ".join(data["finance_jobs"])
-    st.session_state.bais_jobs_input = ", ".join(data["bais_jobs"])
-    st.session_state.accounting_jobs_input = ", ".join(data["accounting_jobs"])
-    
-
 # Main Logic
+# Force fresh data everytime we run the app
+data = db.github_read()
+st.session_state.locations_input = ", ".join(data["locations"])
+st.session_state.finance_jobs_input = ", ".join(data["finance_jobs"])
+st.session_state.bais_jobs_input = ", ".join(data["bais_jobs"])
+st.session_state.accounting_jobs_input = ", ".join(data["accounting_jobs"])
+
 with st.form("my_form"):
-    data = db.github_read()
     locations_str = ", ".join(data["locations"])
     finance_jobs_str = ", ".join(data["finance_jobs"])
     bais_jobs_str = ", ".join(data["bais_jobs"])
