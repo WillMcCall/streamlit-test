@@ -1,6 +1,7 @@
 from github import Github
 import json
 import requests
+import streamlit as st
 
 
 def github_read() -> dict:
@@ -13,7 +14,8 @@ def github_read() -> dict:
 
 
 def github_write(data: dict):
-    g = Github("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")
+    token = st.secrets["GITHUB_TOKEN"]
+    g = Github(token)
 
     repo = g.get_repo("WillMcCall/streamlit_db")
     file = "db.json"
