@@ -13,7 +13,7 @@ def github_read() -> dict:
 
 
 def github_write(data: dict):
-    g = Github("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")
+    g = Github("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")
 
     repo = g.get_repo("WillMcCall/streamlit_db")
     file = "db.json"
