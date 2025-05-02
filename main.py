@@ -6,6 +6,9 @@ from utils import clean_jobs, filter_jobs, get_jobs, to_excel
 
 
 # Main Logic
+st.cache_data.clear()
+st.cache_resource.clear()
+
 with st.form("my_form"):
     data = db.github_read()
     
