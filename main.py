@@ -6,9 +6,10 @@ from datetime import date
 from jobspy import scrape_jobs
 import streamlit as st
 import db
+from utils import clean_jobs, filter_jobs
 
         
-def get_jobs(job_titles: list[str], locations: list[str], days_old: int, my_bar, counter: int, total_jobs) -> list[pd.DataFrame, int]:
+def get_jobs(job_titles: list[str], locations: list[str], days_old: int, my_bar, counter: int, total_jobs, num_jobs_wanted: int) -> list[pd.DataFrame, int]:
     dfs: list[pd.DataFrame] = []
     
     for job_title in job_titles:
@@ -28,29 +29,9 @@ def get_jobs(job_titles: list[str], locations: list[str], days_old: int, my_bar,
     
     df = pd.concat(dfs, ignore_index=True)
     cleaned_df = clean_jobs(df)
-    final_df = filter_jobs(cleaned_df)
+    final_df = filter_jobs(cleaned_df, num_jobs_wanted)
     return [final_df, counter]
     
-
-def clean_jobs(jobs: pd.DataFrame) -> pd.DataFrame:
-    # Removes Duplicates
-    cleaned_jobs = jobs.drop_duplicates().reset_index(drop=True)
-    
-    # Removes all these unnecessary columns
-    cleaned_jobs = cleaned_jobs.drop(
-        ["id", "site", "job_url_direct", "job_type", "salary_source", "currency", "is_remote", "job_level", "job_function", 
-         "listing_type", "emails", "company_industry", "company_logo", "company_url", "company_addresses", 
-         "company_description", "skills", "experience_range", "company_rating", "company_reviews_count", "vacancy_count", 
-         "work_from_home_type", "interval"], axis=1, errors='ignore')
-    
-    return cleaned_jobs
-
-def filter_jobs(jobs: pd.DataFrame) -> pd.DataFrame:
-    jobs = jobs[(jobs['min_amount'] >= 50000) & (jobs['max_amount'] <= 80000)] # Only keep jobs paying $50,000+, remove jobs paying $80,000+
-    jobs = jobs.sort_values("min_amount", ascending=False)
-    jobs = jobs.head(num_jobs // 3)
-    
-    return jobs
 
 def to_excel(df):
     output = BytesIO()
@@ -104,15 +85,15 @@ if submitted:
     # st.write(bais_jobs)
     # st.write(accounting_jobs)
 
-    finance_jobs_output = get_jobs(finance_jobs, locations, days_old, my_bar, counter, total_jobs)
+    finance_jobs_output = get_jobs(finance_jobs, locations, days_old, my_bar, counter, total_jobs, num_jobs)
     finance_jobs_df = finance_jobs_output[0]
     counter = finance_jobs_output[1]
     
-    bais_jobs_output = get_jobs(bais_jobs, locations, days_old, my_bar, counter, total_jobs)
+    bais_jobs_output = get_jobs(bais_jobs, locations, days_old, my_bar, counter, total_jobs, num_jobs)
     bais_jobs_df = bais_jobs_output[0]
     counter = bais_jobs_output[1]
     
-    accounting_jobs_output = get_jobs(accounting_jobs, locations, days_old, my_bar, counter, total_jobs)
+    accounting_jobs_output = get_jobs(accounting_jobs, locations, days_old, my_bar, counter, total_jobs, num_jobs)
     accounting_jobs_df = accounting_jobs_output[0]
     counter = accounting_jobs_output[1]
     
