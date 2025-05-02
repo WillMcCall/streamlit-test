@@ -8,6 +8,9 @@ from utils import clean_jobs, filter_jobs, get_jobs, to_excel
 # Main Logic
 with st.form("my_form"):
     data = db.github_read()
+    
+    st.write(data)
+    
     locations_str = ", ".join(data["locations"])
     finance_jobs_str = ", ".join(data["finance_jobs"])
     bais_jobs_str = ", ".join(data["bais_jobs"])
