@@ -5,6 +5,17 @@ import db
 from utils import clean_jobs, filter_jobs, get_jobs, to_excel
 
 
+# Force clear session_state values so Streamlit doesn't remember old inputs
+if "form_reset" not in st.session_state or st.button("Reset Form"):
+    st.session_state.form_reset = True
+
+    data = db.github_read()
+    st.session_state.locations_input = ", ".join(data["locations"])
+    st.session_state.finance_jobs_input = ", ".join(data["finance_jobs"])
+    st.session_state.bais_jobs_input = ", ".join(data["bais_jobs"])
+    st.session_state.accounting_jobs_input = ", ".join(data["accounting_jobs"])
+    
+
 # Main Logic
 with st.form("my_form"):
     data = db.github_read()
@@ -46,9 +57,6 @@ if submitted:
     
     total_jobs = (len(finance_jobs) + len(bais_jobs) + len(accounting_jobs)) * len(locations)
     
-    # st.write(finance_jobs)
-    # st.write(bais_jobs)
-    # st.write(accounting_jobs)
 
     finance_jobs_output = get_jobs(finance_jobs, locations, days_old, my_bar, counter, total_jobs, num_jobs)
     finance_jobs_df = finance_jobs_output[0]
