@@ -5,21 +5,10 @@ from io import BytesIO
 from datetime import date
 from jobspy import scrape_jobs
 import streamlit as st
+import db
 
-
-def read_config() -> dict:
-    with open("config.json", "r") as file:
-        data = json.load(file)
         
-    return data
-
-
-def write_config(data: dict) -> None:
-    with open('config.json', 'w') as file:
-        json.dump(data, file, indent=4)  # indent makes the output nicely formatted
-    
-        
-def get_jobs(job_titles: list[str], locations: list[str], days_old: int, my_bar, counter: int, total_jobs) -> pd.DataFrame:
+def get_jobs(job_titles: list[str], locations: list[str], days_old: int, my_bar, counter: int, total_jobs) -> list[pd.DataFrame, int]:
     dfs: list[pd.DataFrame] = []
     
     for job_title in job_titles:
@@ -33,13 +22,14 @@ def get_jobs(job_titles: list[str], locations: list[str], days_old: int, my_bar,
                 country_indeed='USA',
                 verbose=1
             ))
-            my_bar.progress(counter + ((100 / total_jobs) / 100), text="Scraping in progress. Please wait.")
+            counter += ((100 / total_jobs) / 100)
+            my_bar.progress(counter, text="Scraping in progress. Please wait...")            
             time.sleep(5) # Avoid rate limiting
     
     df = pd.concat(dfs, ignore_index=True)
     cleaned_df = clean_jobs(df)
     final_df = filter_jobs(cleaned_df)
-    return final_df
+    return [final_df, counter]
     
 
 def clean_jobs(jobs: pd.DataFrame) -> pd.DataFrame:
@@ -71,7 +61,7 @@ def to_excel(df):
 
 
 with st.form("my_form"):
-    data = read_config()
+    data = db.github_read()
     locations_str = ", ".join(data["locations"])
     finance_jobs_str = ", ".join(data["finance_jobs"])
     bais_jobs_str = ", ".join(data["bais_jobs"])
@@ -87,8 +77,6 @@ with st.form("my_form"):
     submitted = st.form_submit_button("Submit")
     
 if submitted:
-    start_time = time.time()
-    
     locations = [loc.strip() for loc in locations_input.split(",")]
     finance_jobs = [job.strip() for job in finance_jobs_input.split(",")]
     bais_jobs = [job.strip() for job in bais_jobs_input.split(",")]
@@ -100,29 +88,41 @@ if submitted:
         "bais_jobs": bais_jobs,
         "accounting_jobs": accounting_jobs
     }
-    write_config(data)
+    db.github_write(data)
 
     
     time_estimate_seconds = len(locations) * ((len(finance_jobs) + len(bais_jobs) + len(accounting_jobs)) * 7)
     time_estimate_minutes = time_estimate_seconds / 60
     
-    st.write(f"Time Estimate: {time_estimate_minutes:.1f} minutes")
+    time_estimate = st.write(f"Time Estimate: {time_estimate_minutes:.1f} minutes")
     my_bar = st.progress(0, text="Scraping in progress. Please wait.")
     counter = 0
     
-    total_jobs = (finance_jobs + bais_jobs + accounting_jobs) * locations
+    total_jobs = (len(finance_jobs) + len(bais_jobs) + len(accounting_jobs)) * len(locations)
     
     # st.write(finance_jobs)
     # st.write(bais_jobs)
     # st.write(accounting_jobs)
 
-    finance_jobs_df = get_jobs(finance_jobs, locations, days_old, my_bar, counter, total_jobs)
-    bais_jobs_df = get_jobs(bais_jobs, locations, days_old, my_bar, counter, total_jobs)
-    accounting_jobs_df = get_jobs(accounting_jobs, locations, days_old, my_bar, counter, total_jobs)
+    finance_jobs_output = get_jobs(finance_jobs, locations, days_old, my_bar, counter, total_jobs)
+    finance_jobs_df = finance_jobs_output[0]
+    counter = finance_jobs_output[1]
+    
+    bais_jobs_output = get_jobs(bais_jobs, locations, days_old, my_bar, counter, total_jobs)
+    bais_jobs_df = bais_jobs_output[0]
+    counter = bais_jobs_output[1]
+    
+    accounting_jobs_output = get_jobs(accounting_jobs, locations, days_old, my_bar, counter, total_jobs)
+    accounting_jobs_df = accounting_jobs_output[0]
+    counter = accounting_jobs_output[1]
+    
+    my_bar.progress(1, text="Finishing up!")
     
     jobs = pd.concat([finance_jobs_df, bais_jobs_df, accounting_jobs_df], ignore_index=True)
     
     jobs = jobs.drop_duplicates().reset_index(drop=True)
+    my_bar.empty()
+
     st.dataframe(jobs)
     
     excel_data = to_excel(jobs)
@@ -133,7 +133,3 @@ if submitted:
         file_name=f"results_{date.today().strftime("%Y-%m-%d")}.xlsx",
         mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
     )
-
-    end_time = time.time()
-    
-    st.write(f"Finished in {(end_time - start_time) / 60:.1f} minutes")
