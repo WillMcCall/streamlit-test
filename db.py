@@ -5,11 +5,15 @@ import streamlit as st
 
 
 def github_read() -> dict:
-    url = "https://raw.githubusercontent.com/WillMcCall/streamlit_db/main/db.json"
+    url = "https://api.github.com/repos/WillMcCall/streamlit_db/contents/db.json"
+    headers = {
+        'Accept': 'application/vnd.github.v3.raw'
+    }
+    token = st.secrets["GITHUB_TOKEN"]
+    response = requests.get(url, headers=headers, auth=('WillMcCall', token))
+    response.raise_for_status()
 
-    response = requests.get(url)
     data = response.json()
-
     return data
 
 
